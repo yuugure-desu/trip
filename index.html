@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>旅遊助手 - 專業導引版</title>
-    <!-- 修正：確保資源連結格式正確，移除 Markdown 語法 -->
+    <title>旅遊助手 - AI 專業記帳版</title>
+    <!-- 資源連結 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -25,7 +25,6 @@
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* 日系極簡卡片樣式 */
         .jp-card {
             background: #ffffff;
             border-radius: 20px;
@@ -34,94 +33,56 @@
             transition: all 0.3s ease;
         }
 
-        .category-active {
-            border-top: 4px solid var(--accent-blue);
-        }
+        .category-active { border-top: 4px solid var(--accent-blue); }
 
-        /* 勾選框復刻深藍圓角 */
-        .custom-checkbox {
-            width: 26px;
-            height: 26px;
-            border-radius: 7px;
+        /* 強化後的金鑰按鈕樣式 */
+        .key-btn-prominent {
+            background-color: #eff6ff;
+            padding: 8px 12px;
+            border-radius: 12px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(44, 68, 126, 0.1);
+        }
+        .key-btn-prominent:active {
+            transform: scale(0.95);
+            background-color: #dbeafe;
+        }
+
+        .custom-checkbox {
+            width: 26px; height: 26px; border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            flex-shrink: 0;
+            cursor: pointer; flex-shrink: 0;
         }
-        .cb-unchecked {
-            border: 2px solid #e2e8f0;
-            background: #ffffff;
-        }
+        .cb-unchecked { border: 2px solid #e2e8f0; background: #ffffff; }
         .cb-checked {
             background-color: var(--accent-blue);
             border-color: var(--accent-blue);
             box-shadow: 0 4px 10px rgba(44, 68, 126, 0.2);
         }
 
-        /* 輸入列明顯提示樣式 (復刻 image_eac6e2) */
-        .input-bar-container {
-            background-color: #fcfdfe;
-            border-top: 1px solid #f1f5f9;
-            padding: 12px 16px;
-            transition: all 0.3s ease;
-        }
-        
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .input-bar-container { background-color: #fcfdfe; border-top: 1px solid #f1f5f9; padding: 12px 16px; }
         .input-field {
-            flex: 1;
-            background: transparent;
-            font-size: 14px;
-            padding: 4px 0;
-            border-bottom: 2px solid transparent;
-            outline: none;
-            transition: all 0.3s ease;
+            flex: 1; background: transparent; font-size: 14px; padding: 4px 0;
+            border-bottom: 2px solid transparent; outline: none; transition: all 0.3s ease;
         }
+        .input-field:focus { border-bottom-color: var(--accent-blue); }
 
-        /* 點擊時出現藍色底線提示 (復刻截圖藍線) */
-        .input-field:focus {
-            border-bottom-color: var(--accent-blue);
-        }
+        .item-text { font-size: 15px; font-weight: 500; }
+        .text-done { color: #94a3b8; text-decoration: line-through; }
 
-        .add-btn-prominent {
-            background-color: #eff6ff;
-            color: var(--accent-blue);
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 5px rgba(44, 68, 126, 0.1);
+        .spinner {
+            width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: #fff; animation: spin 1s linear infinite;
         }
-        .add-btn-prominent:active {
-            transform: scale(0.9);
-            background-color: var(--accent-blue);
-            color: white;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 項目文字 */
-        .item-text {
-            font-size: 15px;
-            font-weight: 500;
-            transition: color 0.2s ease;
-        }
-        .text-done {
-            color: #94a3b8;
-            text-decoration: line-through;
-        }
-
-        .animate-in {
-            animation: slideUp 0.4s ease-out forwards;
-        }
+        .animate-in { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp {
             from { transform: translateY(15px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -146,9 +107,18 @@
                            autofocus class="text-xl font-bold text-slate-800 bg-slate-50 border-b-2 border-[#2c447e] outline-none w-36 px-1">
                 </div>
             </div>
-            <div class="text-right">
-                <p class="text-[10px] text-slate-400">當前匯率</p>
-                <p class="text-sm font-bold text-[#2c447e]">¥1 = ${{ exchangeRate }}</p>
+            
+            <div class="flex items-center gap-3">
+                <!-- 視覺強化後的金鑰按鈕 -->
+                <button @click="showKeyModal = true" class="key-btn-prominent group">
+                    <i class="ph ph-key-bold text-lg text-[#2c447e]"></i>
+                    <span class="text-[8px] font-bold text-[#2c447e]/70 mt-0.5 uppercase">AI 金鑰</span>
+                </button>
+                
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 leading-none">當前匯率</p>
+                    <p class="text-sm font-bold text-[#2c447e] mt-1">¥1 = ${{ exchangeRate }}</p>
+                </div>
             </div>
         </header>
 
@@ -167,10 +137,10 @@
                 </div>
 
                 <div class="jp-card p-5 flex items-center justify-between bg-[#2c447e]/5 border-[#2c447e]/10">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 text-left">
                         <i :class="getWeatherIcon(selectedDate)" class="text-3xl text-[#2c447e]"></i>
-                        <div class="text-left">
-                            <p class="text-[10px] text-[#2c447e] font-bold uppercase tracking-tight">Weather Forecast</p>
+                        <div>
+                            <p class="text-[10px] text-[#2c447e] font-bold uppercase tracking-tight">Forecast</p>
                             <p class="text-sm font-bold text-slate-700">{{ weatherData[selectedDate] || '讀取中...' }}</p>
                         </div>
                     </div>
@@ -178,15 +148,12 @@
 
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-slate-800">{{ formatDateFull(selectedDate) }} 行程</h2>
-                    <button @click="openAddModal" class="bg-[#2c447e] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-all"><i class="ph ph-plus text-xl"></i></button>
+                    <button @click="openAddModal" class="bg-[#2c447e] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-all"><i class="ph ph-plus text-xl text-white"></i></button>
                 </div>
 
-                <div class="space-y-4">
-                    <div v-for="item in currentDayItinerary" :key="item.id" @click="openEditModal(item)" class="jp-card p-5 flex items-start gap-4 cursor-pointer text-left">
-                        <div class="pt-1 text-center">
-                            <div class="w-2 h-2 rounded-full bg-[#2c447e] ring-4 ring-[#2c447e]/10"></div>
-                            <div class="w-px h-16 bg-slate-100 mx-auto mt-2"></div>
-                        </div>
+                <div class="space-y-4 text-left">
+                    <div v-for="item in currentDayItinerary" :key="item.id" @click="openEditModal(item)" class="jp-card p-5 flex items-start gap-4 cursor-pointer">
+                        <div class="pt-1 text-center"><div class="w-2 h-2 rounded-full bg-[#2c447e] ring-4 ring-[#2c447e]/10"></div><div class="w-px h-16 bg-slate-100 mx-auto mt-2"></div></div>
                         <div class="flex-1">
                             <div class="flex justify-between mb-1">
                                 <span class="text-xs font-bold text-[#2c447e] tracking-wider">{{ item.time }}</span>
@@ -199,7 +166,7 @@
                 </div>
             </section>
 
-            <!-- Tab: Todo (待辦清單) -->
+            <!-- Tab: Todo -->
             <section v-if="activeTab === 'checklist'" class="p-6 space-y-6 animate-in">
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold tracking-tight text-slate-800">待辦事項</h2>
@@ -209,8 +176,7 @@
                 </div>
 
                 <div v-for="cat in checklists" :key="cat.id" class="jp-card overflow-hidden mb-4" :class="{ 'category-active': !cat.collapsed }">
-                    <!-- 標題列 -->
-                    <div class="p-4 flex justify-between items-center border-b border-slate-50 cursor-pointer" @click="cat.collapsed = !cat.collapsed">
+                    <div class="p-4 flex justify-between items-center border-b border-slate-50 cursor-pointer text-left" @click="cat.collapsed = !cat.collapsed">
                         <div class="flex items-center gap-3">
                             <i class="ph text-slate-400 transition-transform" :class="cat.collapsed ? 'ph-caret-right' : 'ph-caret-down'"></i>
                             <h3 class="font-bold text-slate-800 text-base">{{ cat.title }}</h3>
@@ -219,7 +185,6 @@
                         <button @click.stop="removeCategory(cat.id)" class="text-slate-200 hover:text-red-400"><i class="ph ph-trash"></i></button>
                     </div>
 
-                    <!-- 項目清單 -->
                     <div v-show="!cat.collapsed" class="divide-y divide-slate-50">
                         <div v-for="item in cat.items" :key="item.id" class="flex items-center gap-4 p-4 group">
                             <div class="custom-checkbox" :class="item.checked ? 'cb-checked' : 'cb-unchecked'" @click="toggleItem(cat.id, item.id)">
@@ -232,16 +197,11 @@
                         </div>
                     </div>
 
-                    <!-- 明顯的新增項目列 (復刻截圖 image_eac6e2) -->
                     <div class="input-bar-container">
-                        <div class="input-wrapper">
+                        <div class="flex items-center gap-3">
                             <i class="ph ph-plus text-slate-300 text-sm"></i>
-                            <input type="text" v-model="cat.tempInput" @keyup.enter="addListItem(cat)" 
-                                   placeholder="新增清單項目..." 
-                                   class="input-field text-slate-600 font-medium placeholder:text-slate-200">
-                            <button @click="addListItem(cat)" class="add-btn-prominent">
-                                <i class="ph ph-plus-bold text-xs"></i>
-                            </button>
+                            <input type="text" v-model="cat.tempInput" @keyup.enter="addListItem(cat)" placeholder="新增準備項目..." class="input-field text-slate-600 font-medium">
+                            <button @click="addListItem(cat)" class="bg-[#eff6ff] text-[#2c447e] p-1.5 rounded-lg active:scale-90"><i class="ph ph-plus-bold text-xs"></i></button>
                         </div>
                     </div>
                 </div>
@@ -257,14 +217,25 @@
                         <i class="ph ph-wallet-fill text-3xl opacity-20"></i>
                     </div>
                 </div>
-                <div class="jp-card p-6 space-y-4">
+
+                <div class="flex gap-3">
+                    <button @click="triggerCamera" :disabled="isAnalyzing"
+                            class="flex-1 bg-white border-2 border-[#2c447e] text-[#2c447e] py-4 rounded-2xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50">
+                        <i v-if="!isAnalyzing" class="ph ph-camera-bold text-xl"></i>
+                        <div v-else class="spinner !border-t-[#2c447e] !border-[rgba(44,68,126,0.2)]"></div>
+                        <span>{{ isAnalyzing ? 'AI 正在努力辨識...' : '拍照記帳 (日本收據)' }}</span>
+                    </button>
+                    <input type="file" ref="cameraInput" accept="image/*" capture="camera" class="hidden" @change="handlePhoto">
+                </div>
+
+                <div class="jp-card p-6 space-y-4 text-left">
                     <div class="flex gap-3 items-center border-b border-slate-100 pb-4">
-                        <input v-model="newExpense.desc" type="text" placeholder="項目" class="flex-1 outline-none text-sm bg-transparent">
+                        <input v-model="newExpense.desc" type="text" placeholder="支出項目" class="flex-1 outline-none text-sm bg-transparent">
                         <input v-model.number="newExpense.amount" type="number" placeholder="¥ 0" class="w-20 text-right outline-none font-bold text-[#2c447e] bg-transparent">
                         <button @click="addExpense" class="text-[#2c447e] font-bold">新增</button>
                     </div>
                     <div class="space-y-4">
-                        <div v-for="(exp, idx) in expenses" :key="idx" class="flex justify-between items-center text-left">
+                        <div v-for="(exp, idx) in expenses" :key="idx" class="flex justify-between items-center">
                             <div><p class="text-sm font-bold text-slate-700">{{ exp.desc }}</p><p class="text-[10px] text-slate-400">{{ exp.date }}</p></div>
                             <div class="flex items-center gap-3"><p class="text-sm font-bold">¥{{ exp.amount }}</p><button @click="removeExpense(idx)" class="text-slate-300 hover:text-red-400"><i class="ph ph-trash"></i></button></div>
                         </div>
@@ -281,39 +252,53 @@
             </button>
         </nav>
 
-        <!-- Modals -->
-        <div v-if="showItemModal" @click.self="showItemModal = false" class="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-            <div class="bg-white w-full max-w-sm rounded-[32px] p-8 space-y-6 animate-in">
-                <div class="flex justify-between items-center text-left"><h3 class="text-xl font-bold">行程編輯</h3><button @click="showItemModal = false"><i class="ph ph-x text-slate-400"></i></button></div>
-                <div class="space-y-4 text-left">
-                    <div class="flex gap-4">
-                        <div class="flex-1 text-xs font-bold text-slate-400">時間<input v-model="newItem.time" type="time" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none border-none"></div>
-                        <div class="flex-[2] text-xs font-bold text-slate-400">地點<input v-model="newItem.location" type="text" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none text-slate-800 font-bold border-none"></div>
+        <!-- Modals: AI Key Settings (金鑰設定) -->
+        <div v-if="showKeyModal" @click.self="showKeyModal = false" class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-8">
+            <div class="bg-white w-full max-w-xs rounded-[32px] p-8 space-y-6 animate-in text-center">
+                <div class="space-y-2">
+                    <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto text-[#2c447e]">
+                        <i class="ph ph-key-bold text-3xl"></i>
                     </div>
-                    <div class="text-xs font-bold text-slate-400">備註<input v-model="newItem.note" type="text" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none text-slate-800 border-none"></div>
-                    <button @click="saveItem" class="w-full bg-teal-600 text-white py-5 rounded-[24px] font-bold shadow-xl">完成</button>
+                    <h3 class="text-xl font-bold text-slate-800">AI 金鑰設定</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed px-4">輸入您的 Google Gemini API Key 以啟用「畫布環境外」的拍照記帳功能。</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <input v-model="userApiKey" type="password" placeholder="貼上您的 API Key..." 
+                           class="w-full p-4 bg-slate-50 rounded-2xl outline-none border-2 border-transparent focus:border-[#2c447e] transition-all text-sm font-mono text-[#2c447e]">
+                    
+                    <button @click="saveApiKey" class="w-full bg-[#2c447e] text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">
+                        儲存並啟用
+                    </button>
+                    
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="block text-[10px] text-[#2c447e] font-bold opacity-60 underline">
+                        獲取免費 Gemini 金鑰教學
+                    </a>
+                    <button @click="showKeyModal = false" class="text-xs text-slate-300 font-medium">稍後再說</button>
                 </div>
             </div>
         </div>
 
-        <div v-if="showAddCategoryModal" @click.self="showAddCategoryModal = false" class="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <!-- Modals: 行程編輯 -->
+        <div v-if="showItemModal" @click.self="showItemModal = false" class="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm p-4 text-left">
             <div class="bg-white w-full max-w-sm rounded-[32px] p-8 space-y-6 animate-in">
-                <div class="flex justify-between items-center text-left"><h3 class="text-xl font-bold">建立清單分類</h3><button @click="showAddCategoryModal = false"><i class="ph ph-x text-slate-400"></i></button></div>
-                <input v-model="newCategoryTitle" type="text" placeholder="例如：手提行李 / 重要證件" class="w-full p-5 bg-gray-50 rounded-2xl outline-none text-slate-800 font-bold border-none">
-                <button @click="addCategory" class="w-full bg-[#2c447e] text-white py-5 rounded-[24px] font-bold">確認建立</button>
-            </div>
-        </div>
-
-        <div v-if="showDateModal" @click.self="showDateModal = false" class="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm p-4 text-left">
-            <div class="bg-white w-full max-w-sm rounded-[32px] p-8 space-y-6 animate-in">
-                <div class="flex justify-between items-center"><h3 class="text-xl font-bold">新增旅遊日期</h3><button @click="showDateModal = false"><i class="ph ph-x text-slate-400"></i></button></div>
-                <input v-model="tempDate" type="date" class="w-full p-5 bg-gray-50 rounded-2xl outline-none text-slate-800">
-                <button @click="addTravelDate" class="w-full bg-[#2c447e] text-white py-5 rounded-[24px] font-bold">加入行程</button>
+                <div class="flex justify-between items-center text-left"><h3 class="text-xl font-bold">行程編輯</h3><button @click="showItemModal = false"><i class="ph ph-x text-slate-400"></i></button></div>
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <div class="flex-1 text-xs font-bold text-slate-400">時間<input v-model="newItem.time" type="time" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none border-none"></div>
+                        <div class="flex-[2] text-xs font-bold text-slate-400">地點<input v-model="newItem.location" type="text" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none text-slate-800 font-bold border-none"></div>
+                    </div>
+                    <div class="text-xs font-bold text-slate-400">備註<input v-model="newItem.note" type="text" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none text-slate-800"></div>
+                    <button @click="saveItem" class="w-full bg-[#2c447e] text-white py-5 rounded-[24px] font-bold shadow-xl">完成</button>
+                </div>
             </div>
         </div>
 
         <!-- Toast -->
-        <div v-if="toastMsg" class="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-[#2c447e] text-white px-6 py-3 rounded-full text-xs shadow-2xl animate-in font-bold flex items-center gap-2"><i class="ph ph-check-circle"></i>{{ toastMsg }}</div>
+        <div v-if="toastMsg" class="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-[#2c447e] text-white px-6 py-3 rounded-full text-xs shadow-2xl animate-in font-bold flex items-center gap-2">
+            <i class="ph ph-check-circle"></i>
+            {{ toastMsg }}
+        </div>
     </div>
 
     <script>
@@ -326,6 +311,11 @@
                 const isEditingTitle = ref(false);
                 const exchangeRate = ref(0.21);
                 const toastMsg = ref('');
+                const apiKey = ""; // 畫布自動注入
+
+                // 金鑰管理
+                const userApiKey = ref(localStorage.getItem('user_gemini_key') || '');
+                const showKeyModal = ref(false);
 
                 const tabs = [
                     { id: 'itinerary', label: 'Plan', icon: 'ph-calendar-check' },
@@ -336,34 +326,123 @@
                 const travelDates = ref(JSON.parse(localStorage.getItem('osaka_dates')) || [new Date().toISOString().split('T')[0]]);
                 const selectedDate = ref(travelDates.value[0]);
                 const tempDate = ref('');
+                const showDateModal = ref(false);
                 const allItinerary = ref(JSON.parse(localStorage.getItem('osaka_all_itinerary')) || []);
                 const newItem = ref({ time: '', location: '', note: '' });
                 const showItemModal = ref(false);
-                const showDateModal = ref(false);
                 const isEditingItem = ref(false);
                 const editingId = ref(null);
 
-                // 待辦清單
                 const checklists = ref(JSON.parse(localStorage.getItem('osaka_checklists')) || [
-                    { id: 1, title: '重要文件', items: [{ id: 101, text: '護照 / 簽證', checked: true }, { id: 102, text: '機票訂單截圖', checked: false }], collapsed: false, tempInput: '' },
-                    { id: 2, title: '電子設備', items: [{ id: 201, text: '行動電源', checked: false }, { id: 202, text: '萬國轉接頭', checked: false }], collapsed: false, tempInput: '' }
+                    { id: 1, title: '重要證件', items: [{ id: 101, text: '護照 / 簽證', checked: true }], collapsed: false, tempInput: '' }
                 ]);
                 const showAddCategoryModal = ref(false);
                 const newCategoryTitle = ref('');
 
                 const expenses = ref(JSON.parse(localStorage.getItem('osaka_expenses')) || []);
                 const newExpense = ref({ desc: '', amount: null });
+                const isAnalyzing = ref(false);
+                const cameraInput = ref(null);
+
                 const weatherData = ref({});
                 const weatherCodes = ref({});
 
-                const showToast = (msg) => { toastMsg.value = msg; setTimeout(() => { toastMsg.value = ''; }, 2000); };
-                const formatDateDay = (d) => d.split('-')[2];
-                const getDayName = (d) => ['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(d).getDay()];
-                const formatDateFull = (d) => { const dt = new Date(d); return `${dt.getMonth()+1}/${dt.getDate()}`; };
+                const showToast = (msg) => { toastMsg.value = msg; setTimeout(() => { toastMsg.value = ''; }, 3000); };
+                const formatDateDay = (d) => d ? d.split('-')[2] : '';
+                const getDayName = (d) => d ? ['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(d).getDay()] : '';
+                const formatDateFull = (d) => { if(!d) return ''; const dt = new Date(d); return `${dt.getMonth()+1}/${dt.getDate()}`; };
 
-                // 行程邏輯
-                const openAddModal = () => { isEditingItem.value = false; newItem.value = { time: '09:00', location: '', note: '' }; showItemModal.value = true; };
+                // --- 金鑰管理邏輯 ---
+                const saveApiKey = () => {
+                    localStorage.setItem('user_gemini_key', userApiKey.value);
+                    showToast('金鑰已儲存並啟用');
+                    showKeyModal.value = false;
+                };
+
+                // --- AI 辨識核心 ---
+                const triggerCamera = () => { if (cameraInput.value) cameraInput.value.click(); };
+
+                const handlePhoto = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    isAnalyzing.value = true;
+                    showToast('AI 正在分析收據內容...');
+                    const reader = new FileReader();
+                    reader.onloadend = async () => {
+                        const base64Data = reader.result.split(',')[1];
+                        await analyzeReceiptWithRetry(base64Data);
+                    };
+                    reader.readAsDataURL(file);
+                    event.target.value = ''; 
+                };
+
+                const analyzeReceiptWithRetry = async (base64ImageData) => {
+                    const activeKey = userApiKey.value || apiKey;
+                    if (!activeKey) {
+                        showKeyModal.value = true;
+                        showToast('請先設定 API Key');
+                        isAnalyzing.value = false;
+                        return;
+                    }
+
+                    const systemPrompt = "你是一個收據分析專家。請找出日本收據中的『合計金額』與『商鋪名稱』。輸出 JSON：{\"amount\": 數字, \"desc\": \"名稱\"}。嚴禁輸出額外文字。";
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
+
+                    const fetchWithBackoff = async (retries = 0) => {
+                        const delay = Math.pow(2, retries) * 1000;
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{
+                                        role: "user",
+                                        parts: [
+                                            { text: "提取此收據的合計金額與店名。" },
+                                            { inlineData: { mimeType: "image/png", data: base64ImageData } }
+                                        ]
+                                    }],
+                                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                                    generationConfig: { responseMimeType: "application/json" }
+                                })
+                            });
+                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                            return await response.json();
+                        } catch (err) {
+                            if (retries < 3) {
+                                await new Promise(r => setTimeout(r, delay));
+                                return fetchWithBackoff(retries + 1);
+                            }
+                            throw err;
+                        }
+                    };
+
+                    try {
+                        const data = await fetchWithBackoff();
+                        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                        const cleanJson = rawText.replace(/```json|```/g, '').trim();
+                        const result = JSON.parse(cleanJson);
+
+                        if (result && result.amount) {
+                            expenses.value.unshift({
+                                desc: result.desc || 'AI 辨識支出',
+                                amount: result.amount,
+                                date: new Date().toLocaleDateString('zh-TW', {month:'2-digit', day:'2-digit'})
+                            });
+                            saveData();
+                            showToast(`辨識成功：¥${result.amount}`);
+                        }
+                    } catch (e) {
+                        showToast(`辨識失敗 (${e.message})`);
+                    } finally {
+                        isAnalyzing.value = false;
+                    }
+                };
+
+                // --- 基礎功能 ---
+                const openAddModal = () => { isEditingItem.value = false; newItem.value = { time: '12:00', location: '', note: '' }; showItemModal.value = true; };
                 const openEditModal = (item) => { isEditingItem.value = true; editingId.value = item.id; newItem.value = { ...item }; showItemModal.value = true; };
+                
                 const saveItem = () => {
                     if (!newItem.value.location) return;
                     if (isEditingItem.value) {
@@ -374,32 +453,28 @@
                     }
                     saveData(); showItemModal.value = false; showToast('行程已儲存');
                 };
-                const addTravelDate = () => {
-                    if (!tempDate.value || travelDates.value.includes(tempDate.value)) return;
-                    travelDates.value.push(tempDate.value); travelDates.value.sort(); saveData(); showDateModal.value = false;
-                };
 
-                // 待辦清單邏輯
-                const getCheckedCount = (cat) => cat.items.filter(i => i.checked).length;
                 const toggleItem = (catId, itemId) => {
                     const cat = checklists.value.find(c => c.id === catId);
                     const item = cat.items.find(i => i.id === itemId);
                     item.checked = !item.checked; saveData();
                 };
+
                 const addListItem = (cat) => {
                     if (!cat.tempInput) return;
                     cat.items.push({ id: Date.now(), text: cat.tempInput, checked: false });
                     cat.tempInput = ''; saveData();
                 };
+
                 const addCategory = () => {
                     if (!newCategoryTitle.value) return;
                     checklists.value.push({ id: Date.now(), title: newCategoryTitle.value, items: [], collapsed: false, tempInput: '' });
                     newCategoryTitle.value = ''; showAddCategoryModal.value = false; saveData();
                 };
-                const removeCategory = (id) => { checklists.value = checklists.value.filter(c => c.id !== id); saveData(); };
-                const deleteListItem = (catId, itemId) => {
-                    const cat = checklists.value.find(c => c.id === catId);
-                    cat.items = cat.items.filter(i => i.id !== itemId); saveData();
+
+                const addTravelDate = () => {
+                    if (!tempDate.value || travelDates.value.includes(tempDate.value)) return;
+                    travelDates.value.push(tempDate.value); travelDates.value.sort(); saveData(); showDateModal.value = false;
                 };
 
                 const addExpense = () => {
@@ -416,24 +491,18 @@
                     localStorage.setItem('osaka_expenses', JSON.stringify(expenses.value));
                 };
 
-                const fetchWeather = async (retryCount = 0) => {
+                const fetchWeather = async () => {
                     try {
                         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.69&longitude=135.50&daily=temperature_2m_max,weathercode&timezone=Asia%2FTokyo');
-                        if (!res.ok) throw new Error();
                         const data = await res.json();
                         data.daily.time.forEach((t, i) => { weatherData.value[t] = `${data.daily.temperature_2m_max[i]}°C`; weatherCodes.value[t] = data.daily.weathercode[i]; });
-                    } catch(e) {
-                        if (retryCount < 3) setTimeout(() => fetchWeather(retryCount + 1), 2000);
-                    }
+                    } catch(e) {}
                 };
+
                 const getWeatherIcon = (d) => {
-                    const code = weatherCodes.value[d];
-                    if (code === undefined) return 'ph ph-cloud-warning';
-                    if (code <= 1) return 'ph ph-sun';
-                    if (code <= 3) return 'ph ph-cloud-sun';
-                    if (code <= 67) return 'ph ph-cloud-rain';
-                    if (code <= 99) return 'ph ph-cloud-lightning';
-                    return 'ph ph-cloud';
+                    const c = weatherCodes.value[d];
+                    if (c === undefined) return 'ph ph-cloud';
+                    return c <= 3 ? 'ph ph-sun' : c <= 67 ? 'ph ph-cloud-rain' : 'ph ph-cloud';
                 };
 
                 onMounted(() => fetchWeather());
@@ -441,14 +510,16 @@
                 return {
                     activeTab, tabs, tripTitle, isEditingTitle, travelDates, selectedDate, allItinerary, newItem, showItemModal, showDateModal, isEditingItem, tempDate,
                     checklists, showAddCategoryModal, newCategoryTitle,
-                    expenses, newExpense, totalExpensesJPY: computed(() => expenses.value.reduce((a,b)=>a+b.amount, 0)),
+                    expenses, newExpense, isAnalyzing, cameraInput, triggerCamera, handlePhoto,
+                    showKeyModal, userApiKey, saveApiKey,
+                    totalExpensesJPY: computed(() => expenses.value.reduce((a,b)=>a+b.amount, 0)),
                     totalExpensesTWD: computed(() => (expenses.value.reduce((a,b)=>a+b.amount,0)*exchangeRate.value).toFixed(0)),
                     exchangeRate, toastMsg, weatherData, formatDateDay, getDayName, formatDateFull, getWeatherIcon, 
-                    getCheckedCount, toggleItem, addListItem, addCategory, removeCategory, deleteListItem,
+                    getCheckedCount: (cat) => cat.items.filter(i => i.checked).length, toggleItem, addListItem, addCategory,
+                    removeCategory: (id) => { checklists.value = checklists.value.filter(c => c.id !== id); saveData(); },
+                    deleteListItem: (catId, itemId) => { const cat = checklists.value.find(c => c.id === catId); cat.items = cat.items.filter(i => i.id !== itemId); saveData(); },
                     openNavigation: (l) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(l)}`),
-                    saveData, openAddModal, openEditModal, saveItem, removeItem: (id) => { allItinerary.value = allItinerary.value.filter(i => i.id !== id); saveData(); },
-                    addExpense, removeExpense: (idx) => { expenses.value.splice(idx,1); saveData(); },
-                    closeItemModal: () => showItemModal.value = false,
+                    saveData, openAddModal, addTravelDate, openEditModal, addExpense, removeExpense: (idx) => { expenses.value.splice(idx,1); saveData(); },
                     currentDayItinerary: computed(() => allItinerary.value.filter(i => i.date === selectedDate.value).sort((a, b) => a.time.localeCompare(b.time)))
                 };
             }
