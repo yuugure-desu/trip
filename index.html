@@ -136,7 +136,12 @@
                 </div>
 
                 <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-bold text-slate-800">{{ formatDateFull(selectedDate) }} 行程</h2>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-lg font-bold text-slate-800">{{ formatDateFull(selectedDate) }} 行程</h2>
+                        <button @click="showDeleteDayModal = true" class="text-slate-300 hover:text-red-400 transition-colors">
+                            <i class="ph ph-trash text-lg"></i>
+                        </button>
+                    </div>
                     <button @click="openAddModal" class="bg-[#2c447e] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-all"><i class="ph ph-plus text-xl"></i></button>
                 </div>
 
@@ -202,7 +207,7 @@
                 </div>
             </section>
 
-            <!-- Tab: 記帳 (強化 AI 功能) -->
+            <!-- Tab: 記帳 -->
             <section v-if="activeTab === 'expense'" class="p-6 space-y-6 animate-in">
                 <div class="bg-[#2c447e] text-white p-8 rounded-[32px] shadow-2xl relative overflow-hidden text-left">
                     <p class="text-xs opacity-70 mb-1 tracking-widest uppercase">Total Expense</p>
@@ -255,6 +260,23 @@
             </button>
         </nav>
 
+        <!-- Modal: 刪除日期確認 -->
+        <div v-if="showDeleteDayModal" @click.self="showDeleteDayModal = false" class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-8">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-8 space-y-6 animate-in text-center">
+                <div class="space-y-2">
+                    <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto text-red-500">
+                        <i class="ph ph-warning-bold text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">確定要刪除此日？</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed px-2">這將會同步移除當日已規劃的所有行程，且無法復原。</p>
+                </div>
+                <div class="space-y-3">
+                    <button @click="deleteCurrentDay" class="w-full bg-red-500 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">確認刪除</button>
+                    <button @click="showDeleteDayModal = false" class="w-full text-slate-400 text-xs font-bold text-center">取消</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal: AI 金鑰設定 -->
         <div v-if="showKeyModal" @click.self="showKeyModal = false" class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-8">
             <div class="bg-white w-full max-w-xs rounded-3xl p-8 space-y-6 animate-in text-center">
@@ -277,7 +299,7 @@
             </div>
         </div>
 
-        <!-- 其他 Modals 保持 Checkpoint 0 邏輯 -->
+        <!-- 其他 Modals -->
         <div v-if="showDateModal" @click.self="showDateModal = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-8">
             <div class="bg-white w-full max-w-xs rounded-3xl p-6 space-y-4 animate-in">
                 <h3 class="font-bold">新增旅遊日期</h3>
@@ -332,6 +354,9 @@
                 const isAnalyzing = ref(false);
                 const cameraInput = ref(null);
 
+                // 刪除日期狀態
+                const showDeleteDayModal = ref(false);
+
                 const tabs = [
                     { id: 'itinerary', label: '行程', icon: 'ph-calendar-check' },
                     { id: 'checklist', label: '待辦', icon: 'ph-checks' },
@@ -370,6 +395,29 @@
                     localStorage.setItem('user_gemini_key', userApiKey.value);
                 };
 
+                // --- 刪除當日行程邏輯 ---
+                const deleteCurrentDay = () => {
+                    const targetDate = selectedDate.value;
+                    
+                    // 從日期清單移除
+                    travelDates.value = travelDates.value.filter(d => d !== targetDate);
+                    
+                    // 從行程總表移除所有屬於該日的行程
+                    allItinerary.value = allItinerary.value.filter(i => i.date !== targetDate);
+                    
+                    // 處理空清單狀況
+                    if (travelDates.value.length === 0) {
+                        travelDates.value = [new Date().toISOString().split('T')[0]];
+                    }
+                    
+                    // 自動切換到剩餘的第一個日期
+                    selectedDate.value = travelDates.value[0];
+                    
+                    saveData();
+                    showDeleteDayModal.value = false;
+                    showToast('該日行程已清除');
+                };
+
                 // --- AI 收據辨識核心 ---
                 const saveApiKey = () => {
                     localStorage.setItem('user_gemini_key', userApiKey.value.trim());
@@ -393,79 +441,113 @@
                     event.target.value = ''; 
                 };
 
-                const analyzeReceipt = async (base64ImageData, retryCount = 0) => {
+                const analyzeReceipt = async (base64ImageData) => {
                     const activeKey = userApiKey.value.trim();
-                    if (!activeKey) {
-                        showKeyModal.value = true;
-                        showToast('請先設定 API 金鑰');
+                    const envKey = ""; 
+                    const finalKey = activeKey || envKey;
+
+                    // 1. 測試模式 (Test Mode)
+                    const isTestMode = !finalKey || window.location.hostname === 'localhost';
+                    
+                    if (isTestMode) {
+                        console.info("偵測到處於開發環境或無金鑰，啟用測試模式...");
+                        await new Promise(r => setTimeout(r, 1500)); 
+                        const mockResult = {
+                            amount: 1250,
+                            desc: "一蘭拉麵 難波店",
+                            date: new Date().toISOString().split('T')[0]
+                        };
+                        expenses.value.unshift({
+                            desc: mockResult.desc,
+                            amount: mockResult.amount,
+                            date: mockResult.date
+                        });
+                        saveData();
+                        showToast(`測試模式成功：¥${mockResult.amount}`);
                         isAnalyzing.value = false;
                         return;
                     }
 
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
+                    // 2. 正式模式：定義模型優先級
+                    const MODEL_PRIORITY = [
+                        'gemini-2.5-flash-lite', 
+                        'gemini-2.0-flash'
+                    ];
                     
                     const systemPrompt = `你是一位精通日語與日本商業習慣的收據分析專家。
                     任務：從上傳的收據圖片中提取關鍵數據。
-                    輸出格式：必須為純 JSON，欄位如下：
+                    輸出格式：必須為嚴格格式的 JSON，欄位如下：
                     {
                     "amount": 數字(僅限合計金額，排除免稅額或分項數字),
                     "desc": "商鋪名稱(請翻譯或轉寫為繁體中文)",
                     "date": "YYYY-MM-DD"
                     }
-                    約束：
+                    約束條件：
                     1. 嚴禁輸出 JSON 以外的任何解釋文字。
-                    2. 若辨識不清，請回傳 null 值。
-                    3. 優先尋找「合計」、「税込」或「Total」字樣後的數字。`;
+                    2. 若辨識不清，請將該欄位設為 null。
+                    3. 優先尋找「合計」、「税込」或「Total」標籤後的數值。`;
 
-                    try {
-                        const response = await fetch(endpoint, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{
-                                    parts: [
-                                        { text: "請分析這張收據圖片並回傳 JSON 數據。" },
-                                        { inlineData: { mimeType: "image/png", data: base64ImageData } }
-                                    ]
-                                }],
-                                systemInstruction: { parts: [{ text: systemPrompt }] },
-                                generationConfig: { responseMimeType: "application/json" }
-                            })
-                        });
+                    let lastError = null;
 
-                        if (!response.ok) {
-                            if (response.status === 429 && retryCount < 5) {
-                                const delay = Math.pow(2, retryCount) * 1000;
-                                await new Promise(r => setTimeout(r, delay));
-                                return analyzeReceipt(base64ImageData, retryCount + 1);
-                            }
-                            throw new Error(`連線錯誤 (${response.status})`);
-                        }
+                    // 3. 429 錯誤輪詢
+                    for (const modelId of MODEL_PRIORITY) {
+                        try {
+                            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${finalKey}`;
 
-                        const data = await response.json();
-                        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                        const result = JSON.parse(rawText);
-
-                        if (result && result.amount !== null) {
-                            expenses.value.unshift({
-                                desc: result.desc || 'AI 辨識支出',
-                                amount: result.amount,
-                                date: result.date || new Date().toLocaleDateString('zh-TW', {month:'2-digit', day:'2-digit'})
+                            const response = await fetch(endpoint, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{
+                                        parts: [
+                                            { text: "分析此圖片並以 JSON 回傳結果。" },
+                                            { inline_data: { mime_type: "image/png", data: base64ImageData } }
+                                        ]
+                                    }],
+                                    system_instruction: { parts: [{ text: systemPrompt }] },
+                                    generation_config: { response_mime_type: "application/json" }
+                                })
                             });
-                            saveData();
-                            showToast(`辨識成功：¥${result.amount}`);
-                        } else {
-                            showToast('AI 無法確定金額，請手動輸入');
+
+                            if (response.status === 429) {
+                                console.warn(`模型 ${modelId} 流量爆掉，自動嘗試清單中下一個模型...`);
+                                continue;
+                            }
+
+                            if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.error?.message || `API 請求失敗 (${response.status})`);
+                            }
+
+                            const data = await response.json();
+                            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                            const result = JSON.parse(rawText);
+
+                            if (result && result.amount !== null) {
+                                expenses.value.unshift({
+                                    desc: result.desc || 'AI 辨識支出',
+                                    amount: result.amount,
+                                    date: result.date || new Date().toLocaleDateString('zh-TW', {month:'2-digit', day:'2-digit'})
+                                });
+                                saveData();
+                                showToast(`辨識成功：¥${result.amount}`);
+                                isAnalyzing.value = false;
+                                return; 
+                            } else {
+                                throw new Error('AI 解析結果不完整');
+                            }
+
+                        } catch (err) {
+                            lastError = err;
+                            console.error(`[${modelId}] 調用失敗:`, err.message);
                         }
-                    } catch (e) {
-                        console.error(e);
-                        showToast(`辨識失敗: ${e.message}`);
-                    } finally {
-                        isAnalyzing.value = false;
                     }
+
+                    showToast(lastError?.message || "所有可用模型均配額不足，請稍後重試。");
+                    isAnalyzing.value = false;
                 };
 
-                // --- 原有功能維持不變 ---
+                // --- 基礎功能 ---
                 const formatDateDay = (d) => d ? d.split('-')[2] : '';
                 const getDayName = (d) => d ? ['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(d).getDay()] : '';
                 const formatDateFull = (d) => { if(!d) return ''; const dt = new Date(d); return `${dt.getMonth()+1}/${dt.getDate()}`; };
@@ -497,6 +579,7 @@
                     getCheckedCount: (cat) => cat.items.filter(i => i.checked).length, toggleItem, addListItem, addCategory, removeCategory, deleteListItem,
                     openNavigation, saveData, openAddModal, addTravelDate, openEditModal, addExpense, deleteItem, removeExpense,
                     triggerCamera, handlePhoto, saveApiKey,
+                    showDeleteDayModal, deleteCurrentDay,
                     currentDayItinerary: computed(() => allItinerary.value.filter(i => i.date === selectedDate.value).sort((a, b) => a.time.localeCompare(b.time)))
                 };
             }
