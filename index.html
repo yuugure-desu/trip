@@ -3,53 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>旅遊助手 - 極簡共享版</title>
-    <!-- 核心庫連結修正：移除 Markdown 連結語法 -->
+    <title>旅遊助手 - AI 專業規劃版</title>
+    <!-- 資源連結修正 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        :root { --accent-blue: #2c447e; --bg-light: #f8fafc; }
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #334155; user-select: none; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --accent-blue: #2c447e; 
+            --bg-light: #f8fafc;
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-light);
+            color: #334155;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .jp-card { background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: all 0.2s ease; }
-        .btn-text { padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 12px; transition: all 0.2s; }
-        .btn-text:active { opacity: 0.6; transform: scale(0.95); }
-        .animate-in { animation: slideUp 0.3s ease-out forwards; }
-        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .text-done { text-decoration: line-through; opacity: 0.4; }
-        .tab-active { color: var(--accent-blue); border-bottom: 2px solid var(--accent-blue); }
-        .safe-touch { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+
+        .jp-card {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 25px -5px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+        }
+
+        .key-btn-prominent {
+            background-color: #eff6ff;
+            padding: 8px 12px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(44, 68, 126, 0.1);
+        }
+
+        .category-active { border-top: 4px solid var(--accent-blue); }
+
+        .custom-checkbox {
+            width: 26px; height: 26px; border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer; flex-shrink: 0;
+        }
+        .cb-unchecked { border: 2px solid #e2e8f0; background: #ffffff; }
+        .cb-checked {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 10px rgba(44, 68, 126, 0.2);
+        }
+
+        .input-bar-container { background-color: #fcfdfe; border-top: 1px solid #f1f5f9; padding: 12px 16px; }
+        .input-field {
+            flex: 1; background: transparent; font-size: 14px; padding: 4px 0;
+            border-bottom: 2px solid transparent; outline: none; transition: all 0.3s ease;
+        }
+        .input-field:focus { border-bottom-color: var(--accent-blue); }
+
+        .spinner {
+            width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: #fff; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .animate-in { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes slideUp {
+            from { transform: translateY(15px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .text-done { text-decoration: line-through; opacity: 0.5; }
     </style>
 </head>
-<body class="flex justify-center min-h-screen text-left">
+<body class="flex justify-center min-h-screen">
 
-    <div id="app" class="w-full max-w-md bg-white min-h-screen shadow-xl flex flex-col relative overflow-hidden">
+    <div id="app" class="w-full max-w-md bg-[#fcfcfc] min-h-screen shadow-2xl flex flex-col relative overflow-hidden">
         
         <!-- Header -->
-        <header class="bg-white sticky top-0 z-50 px-6 py-5 border-b border-slate-100">
-            <div class="flex justify-between items-start mb-2">
-                <div class="text-left">
-                    <div class="text-[10px] font-bold mb-1 flex items-center gap-1">
-                        <span :class="isSyncing ? 'text-amber-500' : 'text-emerald-500'">
-                            {{ isSyncing ? '○ 同步中' : '● 雲端連線' }}
-                        </span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-bold text-slate-800 tracking-tight">{{ tripTitle }}</h1>
-                    </div>
-                </div>
-                
+        <header class="bg-white/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-slate-100">
+            <div class="text-left">
+                <p class="text-[10px] text-[#2c447e] font-bold tracking-widest uppercase mb-0.5 opacity-60">Travel Assistant</p>
                 <div class="flex items-center gap-2">
-                    <button @click="showSyncModal = true" class="bg-slate-100 text-slate-600 btn-text">共享ID</button>
-                    <button @click="showKeyModal = true" class="bg-slate-800 text-white btn-text">AI設定</button>
+                    <i class="ph ph-leaf text-[#2c447e]"></i>
+                    <div v-if="!isEditingTitle" @click="isEditingTitle = true" class="flex items-center gap-2 cursor-pointer">
+                        <h1 class="text-xl font-bold text-slate-800">{{ tripTitle }}</h1>
+                        <i class="ph ph-pencil-simple text-slate-300 text-xs"></i>
+                    </div>
+                    <input v-else v-model="tripTitle" @blur="isEditingTitle = false; saveData()" @keyup.enter="isEditingTitle = false; saveData()"
+                           autofocus class="text-xl font-bold text-slate-800 bg-slate-50 border-b-2 border-[#2c447e] outline-none w-36 px-1">
                 </div>
             </div>
             
-            <div class="flex justify-between items-center text-[11px] bg-slate-50 p-2 rounded-lg mt-2">
-                <p class="text-slate-500 font-mono">ID: {{ syncId }}</p>
-                <p class="font-bold text-[#2c447e]">匯率: ¥1 = NT${{ exchangeRate }}</p>
+            <div class="flex items-center gap-3">
+                <button @click="showKeyModal = true" class="key-btn-prominent">
+                    <i class="ph ph-key-bold text-lg text-[#2c447e]"></i>
+                    <span class="text-[8px] font-bold text-[#2c447e]/70 mt-0.5 uppercase">AI 設定</span>
+                </button>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 leading-none">當前匯率</p>
+                    <p class="text-sm font-bold text-[#2c447e] mt-1">¥1 = NT${{ exchangeRate }}</p>
+                </div>
             </div>
         </header>
 
@@ -57,496 +115,477 @@
             
             <!-- Tab: 行程規劃 -->
             <section v-if="activeTab === 'itinerary'" class="p-6 space-y-6 animate-in">
-                <div class="flex overflow-x-auto no-scrollbar gap-2 py-1">
+                <div class="flex overflow-x-auto no-scrollbar gap-3 py-2">
                     <button v-for="date in travelDates" :key="date" @click="selectedDate = date"
-                            class="flex-shrink-0 px-4 py-3 rounded-xl border transition-all text-center"
-                            :class="selectedDate === date ? 'bg-[#2c447e] text-white shadow-md' : 'bg-white text-slate-400 border-slate-100'">
-                        <span class="block text-[9px] font-bold">{{ getDayName(date) }}</span>
-                        <span class="block text-sm font-bold">{{ formatDateDay(date) }}日</span>
+                            class="flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center border transition-all"
+                            :class="selectedDate === date ? 'bg-[#2c447e] text-white shadow-lg' : 'bg-white text-slate-400 border-slate-100'">
+                        <span class="text-[10px] opacity-70">{{ getDayName(date) }}</span>
+                        <span class="text-lg font-bold">{{ formatDateDay(date) }}</span>
                     </button>
-                    <button @click="showDateModal = true" class="flex-shrink-0 px-4 py-3 rounded-xl border-2 border-dashed border-slate-200 text-slate-300 font-bold">+</button>
+                    <button @click="showDateModal = true" class="flex-shrink-0 w-16 h-20 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300"><i class="ph ph-calendar-plus text-2xl"></i></button>
                 </div>
 
-                <!-- 天氣與本日管理區 -->
-                <div class="jp-card p-4 flex justify-between items-center bg-slate-50">
-                    <p class="text-xs font-bold text-slate-600">
-                        {{ weatherData[selectedDate] ? '預報：' + weatherData[selectedDate] : '選取日期開始規劃' }}
-                    </p>
-                    <!-- 刪除本日按鈕 -->
-                    <button @click="showDeleteDayModal = true" class="text-red-400 text-[10px] font-bold border border-red-500/20 px-3 py-1.5 rounded-lg active:bg-red-50">刪除本日</button>
-                </div>
-
-                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                    <h2 class="text-lg font-bold text-slate-800">{{ formatDateFull(selectedDate) }} 行程</h2>
-                    <button @click="openAddModal" class="text-[#2c447e] font-bold text-sm bg-blue-50 px-3 py-1.5 rounded-lg active:scale-95 transition-all">+ 新增項目</button>
-                </div>
-
-                <div class="space-y-4">
-                    <div v-for="item in currentDayItinerary" :key="item.id" @click="openEditModal(item)" class="jp-card p-4 group relative">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1 min-w-0 pr-4">
-                                <div class="flex items-center gap-2 mb-1.5">
-                                    <span class="text-[10px] font-bold text-white bg-[#2c447e] px-2 py-0.5 rounded shadow-sm">{{ item.time }}</span>
-                                </div>
-                                <h3 class="font-bold text-slate-800 text-lg mb-1 truncate">{{ item.location }}</h3>
-                                <p class="text-[11px] text-slate-400 line-clamp-1" v-if="item.note">{{ item.note }}</p>
-                            </div>
-                            
-                            <div class="flex items-center gap-4 shrink-0">
-                                <button @click.stop="openNavigation(item.location)" 
-                                        class="safe-touch text-blue-600 font-bold text-xs bg-blue-50 px-3 rounded-xl border border-blue-100 active:bg-blue-100 transition-colors">
-                                    導覽
-                                </button>
-                                <button @click.stop="removeItem(item.id)" 
-                                        class="safe-touch text-slate-300 hover:text-red-500 font-bold text-xs active:bg-red-50 rounded-xl transition-colors">
-                                    移除
-                                </button>
-                            </div>
+                <div class="jp-card p-5 flex items-center justify-between bg-[#2c447e]/5 border-[#2c447e]/10">
+                    <div class="flex items-center gap-3 text-left">
+                        <i :class="getWeatherIcon(selectedDate)" class="text-3xl text-[#2c447e]"></i>
+                        <div>
+                            <p class="text-[10px] text-[#2c447e] font-bold uppercase tracking-tight">Forecast</p>
+                            <p class="text-sm font-bold text-slate-700">{{ weatherData[selectedDate] || '讀取中...' }}</p>
                         </div>
                     </div>
-                    <div v-if="currentDayItinerary.length === 0" class="text-center py-12 text-slate-300 text-xs italic">尚無行程，點擊上方新增</div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-lg font-bold text-slate-800">{{ formatDateFull(selectedDate) }} 行程</h2>
+                        <button @click="showDeleteDayModal = true" class="text-slate-300 hover:text-red-400 transition-colors">
+                            <i class="ph ph-trash text-lg"></i>
+                        </button>
+                    </div>
+                    <button @click="openAddModal" class="bg-[#2c447e] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-all"><i class="ph ph-plus text-xl"></i></button>
+                </div>
+
+                <div class="space-y-4 text-left">
+                    <div v-for="item in currentDayItinerary" :key="item.id" @click="openEditModal(item)" class="jp-card p-5 flex items-start gap-4 cursor-pointer">
+                        <div class="pt-1 text-center">
+                            <div class="w-2 h-2 rounded-full bg-[#2c447e] ring-4 ring-[#2c447e]/10"></div>
+                            <div class="w-px h-16 bg-slate-100 mx-auto mt-2"></div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-xs font-bold text-[#2c447e] tracking-wider">{{ item.time }}</span>
+                                <button @click.stop="openNavigation(item.location)" class="text-[#2c447e]"><i class="ph ph-map-trifold text-xl"></i></button>
+                            </div>
+                            <h3 class="font-bold text-slate-800">{{ item.location }}</h3>
+                            <p class="text-xs text-slate-400 font-light">{{ item.note }}</p>
+                        </div>
+                    </div>
+                    <div v-if="currentDayItinerary.length === 0" class="text-center py-10 opacity-30 italic">
+                        <p class="text-xs">尚無行程，點擊右上方按鈕新增</p>
+                    </div>
                 </div>
             </section>
 
             <!-- Tab: 待辦事項 -->
             <section v-if="activeTab === 'checklist'" class="p-6 space-y-6 animate-in">
-                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                    <h2 class="text-lg font-bold text-slate-800">準備清單</h2>
-                    <button @click="showAddCategoryModal = true" class="text-[#2c447e] font-bold text-sm bg-blue-50 px-3 py-1.5 rounded-lg">+ 新增分類</button>
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-bold tracking-tight text-slate-800">待辦事項</h2>
+                    <button @click="showAddCategoryModal = true" class="text-[#2c447e] font-bold text-sm flex items-center gap-1">
+                        <i class="ph ph-plus-circle"></i> 新增分類
+                    </button>
                 </div>
 
-                <div v-for="cat in checklists" :key="cat.id" class="jp-card overflow-hidden mb-4">
-                    <div class="p-4 flex justify-between items-center border-b border-slate-50 cursor-pointer" @click="cat.collapsed = !cat.collapsed">
-                        <h3 class="font-bold text-slate-800 text-sm">
-                            <span class="mr-2 opacity-30">{{ cat.collapsed ? '[+]' : '[-]' }}</span>
-                            {{ cat.title }}
-                        </h3>
-                        <button @click.stop="removeCategory(cat.id)" class="text-slate-300 text-[10px] font-bold px-2 py-1">刪除分類</button>
+                <div v-for="cat in checklists" :key="cat.id" class="jp-card overflow-hidden mb-4" :class="{ 'category-active': !cat.collapsed }">
+                    <div class="p-4 flex justify-between items-center border-b border-slate-50 cursor-pointer text-left" @click="cat.collapsed = !cat.collapsed">
+                        <div class="flex items-center gap-3">
+                            <i class="ph text-slate-400 transition-transform" :class="cat.collapsed ? 'ph-caret-right' : 'ph-caret-down'"></i>
+                            <h3 class="font-bold text-slate-800 text-base">{{ cat.title }}</h3>
+                            <span class="text-[11px] text-[#2c447e] font-bold bg-[#2c447e]/5 px-2 py-0.5 rounded-full">({{ getCheckedCount(cat) }}/{{ cat.items.length }})</span>
+                        </div>
+                        <button @click.stop="removeCategory(cat.id)" class="text-slate-200 hover:text-red-400"><i class="ph ph-trash"></i></button>
                     </div>
 
                     <div v-show="!cat.collapsed" class="divide-y divide-slate-50">
-                        <div v-for="item in cat.items" :key="item.id" class="flex items-center gap-3 p-4">
-                            <button @click="toggleCheckItem(cat.id, item.id)" 
-                                    class="w-6 h-6 rounded-lg border-2 flex items-center justify-center text-[10px] font-bold transition-all"
-                                    :class="item.checked ? 'bg-[#2c447e] border-[#2c447e] text-white' : 'border-slate-200 text-transparent'">V</button>
-                            <p class="flex-1 text-left text-sm" :class="{ 'text-done': item.checked }">{{ item.text }}</p>
-                            <button @click="deleteListItem(cat.id, item.id)" class="text-slate-200 text-lg px-2">×</button>
+                        <div v-for="item in cat.items" :key="item.id" class="flex items-center gap-4 p-4 group">
+                            <div class="custom-checkbox" :class="item.checked ? 'cb-checked' : 'cb-unchecked'" @click="toggleItem(cat.id, item.id)">
+                                <i v-if="item.checked" class="ph ph-check-bold text-white text-[10px]"></i>
+                            </div>
+                            <div class="flex-1 text-left" @click="toggleItem(cat.id, item.id)">
+                                <p class="item-text" :class="{ 'text-done': item.checked }">{{ item.text }}</p>
+                            </div>
+                            <button @click="deleteListItem(cat.id, item.id)" class="text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph ph-x-bold text-xs"></i></button>
                         </div>
                     </div>
-                    <div class="p-3 bg-slate-50 flex gap-2">
-                        <input type="text" v-model="cat.tempInput" @keyup.enter="addListItem(cat)" placeholder="新增項目..." class="flex-1 text-xs p-2.5 rounded-lg border border-slate-100 outline-none">
-                        <button @click="addListItem(cat)" class="text-[#2c447e] font-bold text-sm px-3">確定</button>
+
+                    <div class="input-bar-container">
+                        <div class="flex items-center gap-3">
+                            <i class="ph ph-plus text-slate-300 text-sm"></i>
+                            <input type="text" v-model="cat.tempInput" @keyup.enter="addListItem(cat)" placeholder="新增準備項目..." class="input-field text-slate-600 font-medium">
+                            <button @click="addListItem(cat)" class="bg-[#eff6ff] text-[#2c447e] p-1.5 rounded-lg"><i class="ph ph-plus-bold text-xs"></i></button>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- Tab: 記帳 -->
             <section v-if="activeTab === 'expense'" class="p-6 space-y-6 animate-in">
-                <div class="bg-slate-900 text-white p-8 rounded-2xl text-left shadow-lg">
-                    <p class="text-[10px] font-bold opacity-50 uppercase tracking-widest mb-1">Total Travel Expenses</p>
-                    <h2 class="text-4xl font-bold">¥ {{ totalExpensesJPY }}</h2>
-                    <p class="text-xs mt-2 opacity-60 font-medium">換算後約 NT$ {{ totalExpensesTWD }}</p>
+                <div class="bg-[#2c447e] text-white p-8 rounded-[32px] shadow-2xl relative overflow-hidden text-left">
+                    <p class="text-xs opacity-70 mb-1 tracking-widest uppercase">Total Expense</p>
+                    <h2 class="text-4xl font-light">NT$ <span class="font-bold">{{ totalExpensesTWD }}</span></h2>
+                    <div class="mt-6 flex justify-between items-end border-t border-white/20 pt-4">
+                        <p class="text-sm opacity-90">¥ {{ totalExpensesJPY }}</p>
+                        <i class="ph ph-wallet-fill text-3xl opacity-20"></i>
+                    </div>
                 </div>
 
-                <button @click="triggerCamera" :disabled="isAnalyzing"
-                        class="w-full bg-white border-2 border-slate-900 text-slate-900 py-4 rounded-xl font-bold active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                    {{ isAnalyzing ? 'AI 正在分析中...' : '[ 拍照記帳：日本收據辨識 ]' }}
-                </button>
-                <input type="file" ref="cameraInput" accept="image/*" capture="camera" class="hidden" @change="handlePhoto">
+                <!-- AI 辨識按鈕 -->
+                <div class="flex gap-3">
+                    <button @click="triggerCamera" :disabled="isAnalyzing"
+                            class="flex-1 bg-white border-2 border-[#2c447e] text-[#2c447e] py-4 rounded-2xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50 shadow-sm">
+                        <i v-if="!isAnalyzing" class="ph ph-camera-bold text-xl"></i>
+                        <div v-else class="spinner !border-t-[#2c447e] !border-[rgba(44,68,126,0.2)]"></div>
+                        <span>{{ isAnalyzing ? 'AI 分析中...' : '拍照記帳 (日本收據)' }}</span>
+                    </button>
+                    <input type="file" ref="cameraInput" accept="image/*" capture="camera" class="hidden" @change="handlePhoto">
+                </div>
 
-                <div class="jp-card p-5 space-y-4">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2">支出收據歷史</h3>
-                    <div v-for="(exp, idx) in expenses" :key="idx" class="flex justify-between items-center border-b border-slate-50 pb-3 last:border-0">
-                        <div class="text-left min-w-0 flex-1">
-                            <p class="text-sm font-bold text-slate-800 truncate">{{ exp.desc }}</p>
-                            <p class="text-[10px] text-slate-400">{{ exp.date }}</p>
+                <div class="jp-card p-6 space-y-4 text-left">
+                    <div class="flex gap-3 items-center border-b border-slate-100 pb-4">
+                        <input v-model="newExpense.desc" type="text" placeholder="支出項目 (如：拉麵)" class="flex-1 outline-none text-sm bg-transparent">
+                        <input v-model.number="newExpense.amount" type="number" placeholder="¥ 0" class="w-20 text-right outline-none font-bold text-[#2c447e] bg-transparent">
+                        <button @click="addExpense" class="text-[#2c447e] font-bold">新增</button>
+                    </div>
+                    <div class="space-y-4 max-h-80 overflow-y-auto no-scrollbar">
+                        <div v-for="(exp, idx) in expenses" :key="idx" class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm font-bold text-slate-700">{{ exp.desc }}</p>
+                                <p class="text-[10px] text-slate-400">{{ exp.date }}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <p class="text-sm font-bold">¥{{ exp.amount }}</p>
+                                <button @click="removeExpense(idx)" class="text-slate-300 hover:text-red-400"><i class="ph ph-trash"></i></button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-4 shrink-0">
-                            <p class="text-sm font-bold text-slate-700">¥{{ exp.amount }}</p>
-                            <button @click="removeExpense(idx)" class="text-red-300 text-xs font-bold px-2 py-1 active:bg-red-50 rounded">移除</button>
-                        </div>
+                        <div v-if="expenses.length === 0" class="text-center py-10 opacity-20 text-xs italic font-medium">尚無記帳紀錄</div>
                     </div>
                 </div>
             </section>
         </main>
 
-        <!-- 底部導覽列 -->
-        <nav class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-around items-center p-4 pb-10 safe-area-bottom z-50">
-            <button v-for="t in tabs" :key="t.id" @click="activeTab = t.id" class="flex-1 py-1 text-center" :class="activeTab === t.id ? 'tab-active' : 'text-slate-300'">
-                <span class="text-xs font-bold uppercase tracking-widest">{{ t.label.substring(0,2) }}</span>
+        <!-- Navigation Bar -->
+        <nav class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 flex justify-around items-center p-4 pb-8 safe-area-bottom z-50">
+            <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" class="flex flex-col items-center gap-1 flex-1 transition-all" :class="activeTab === tab.id ? 'text-[#2c447e]' : 'text-slate-400'">
+                <i class="ph text-2xl" :class="activeTab === tab.id ? tab.icon + '-fill' : tab.icon"></i>
+                <span class="text-[9px] font-bold uppercase tracking-widest">{{ tab.label }}</span>
             </button>
         </nav>
 
-        <!-- Modals：加入 @click.self 背景關閉功能 -->
-        
-        <!-- 刪除日期確認 Modal -->
-        <div v-if="showDeleteDayModal" @click.self="showDeleteDayModal = false" class="fixed inset-0 z-[150] bg-black/70 backdrop-blur-sm flex items-center justify-center p-8 text-center">
-            <div class="bg-white w-full rounded-2xl p-6 animate-in shadow-2xl">
-                <h3 class="font-bold text-lg mb-2">確定要刪除此日行程？</h3>
-                <p class="text-xs text-slate-400 mb-6">這將移除該日的所有規劃且無法撤銷。</p>
-                <div class="flex flex-col gap-2">
-                    <button @click="deleteCurrentDay" class="w-full bg-red-500 text-white py-4 rounded-xl font-bold active:scale-95 transition-transform">確認刪除</button>
-                    <button @click="showDeleteDayModal = false" class="w-full py-3 text-slate-400 text-xs font-bold">先不要</button>
+        <!-- Modal: 刪除日期確認 -->
+        <div v-if="showDeleteDayModal" @click.self="showDeleteDayModal = false" class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-8">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-8 space-y-6 animate-in text-center">
+                <div class="space-y-2">
+                    <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto text-red-500">
+                        <i class="ph ph-warning-bold text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">確定要刪除此日？</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed px-2">這將會同步移除當日已規劃的所有行程，且無法復原。</p>
+                </div>
+                <div class="space-y-3">
+                    <button @click="deleteCurrentDay" class="w-full bg-red-500 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">確認刪除</button>
+                    <button @click="showDeleteDayModal = false" class="w-full text-slate-400 text-xs font-bold text-center">取消</button>
                 </div>
             </div>
         </div>
 
-        <!-- 同步 ID Modal -->
-        <div v-if="showSyncModal" @click.self="showSyncModal = false" class="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-8 text-left">
-            <div class="bg-white w-full rounded-2xl p-6 animate-in shadow-2xl">
-                <h3 class="font-bold text-lg mb-4 text-slate-800">雲端同步設定</h3>
-                <div class="p-5 bg-slate-50 rounded-xl mb-4 text-center border border-slate-100">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-widest">您的共享 ID</p>
-                    <p @click="copySyncId" class="text-2xl font-mono font-bold text-[#2c447e] cursor-pointer active:opacity-50">{{ syncId }}</p>
-                    <p class="text-[9px] text-blue-400 mt-2 font-bold">(點擊可複製 ID)</p>
+        <!-- Modal: AI 金鑰設定 -->
+        <div v-if="showKeyModal" @click.self="showKeyModal = false" class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-8">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-8 space-y-6 animate-in text-center">
+                <div class="space-y-2">
+                    <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto text-[#2c447e]">
+                        <i class="ph ph-key-bold text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">AI 功能配置</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed px-4">請輸入 Google Gemini API Key 以啟用日本收據自動辨識功能。</p>
                 </div>
-                <input v-model="inputSyncId" placeholder="輸入朋友的 ID" class="w-full p-4 bg-slate-100 rounded-xl outline-none text-sm mb-3 border border-slate-200">
-                <button @click="switchSyncId" class="w-full bg-[#2c447e] text-white py-4 rounded-xl font-bold shadow-lg">切換至此 ID</button>
-                <button @click="showSyncModal = false" class="w-full text-slate-400 text-xs text-center py-4 uppercase font-bold">關閉視窗</button>
-            </div>
-        </div>
-
-        <!-- AI 設定 Modal -->
-        <div v-if="showKeyModal" @click.self="showKeyModal = false" class="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-8 text-left">
-            <div class="bg-white w-full rounded-2xl p-6 animate-in shadow-2xl">
-                <h3 class="font-bold text-lg mb-4">Gemini AI 配置</h3>
-                <input v-model="userApiKey" type="password" placeholder="貼上 API Key" class="w-full p-4 bg-slate-100 rounded-xl outline-none border border-slate-200 text-sm mb-4">
-                <button @click="saveApiKey" class="w-full bg-slate-800 text-white py-4 rounded-xl font-bold shadow-lg">儲存金鑰</button>
-                <button @click="showKeyModal = false" class="w-full text-slate-400 text-xs text-center py-4 uppercase font-bold">取消</button>
-            </div>
-        </div>
-
-        <!-- 行程細節編輯 Modal -->
-        <div v-if="showItemModal" @click.self="showItemModal = false" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end justify-center p-4 text-left">
-            <div class="bg-white w-full rounded-t-3xl p-6 animate-in shadow-2xl max-w-sm">
-                <h3 class="font-bold text-lg mb-6">行程細節編輯</h3>
-                <div class="space-y-5">
+                <div class="space-y-4 text-left">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-widest">時間</label>
-                        <input v-model="newItem.time" type="time" class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Gemini API Key</label>
+                        <input v-model="userApiKey" type="password" placeholder="貼上 AIza... 開頭的金鑰" 
+                               class="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 mt-1 text-sm font-mono">
                     </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-widest">地點</label>
-                        <input v-model="newItem.location" type="text" class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-widest">筆記</label>
-                        <input v-model="newItem.note" type="text" class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none">
-                    </div>
-                    <button @click="saveItem" class="w-full bg-[#2c447e] text-white py-5 rounded-2xl font-bold shadow-xl active:scale-95 transition-all">儲存並同步</button>
-                    <button v-if="isEditingItem" @click="deleteItem" class="w-full text-red-500 font-bold text-xs text-center pt-2">刪除此項目</button>
+                    <button @click="saveApiKey" class="w-full bg-[#2c447e] text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">儲存金鑰</button>
+                    <button @click="showKeyModal = false" class="w-full text-slate-400 text-xs text-center">取消</button>
                 </div>
             </div>
         </div>
 
-        <!-- 日期新增 Modal -->
-        <div v-if="showDateModal" @click.self="showDateModal = false" class="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-8 text-left">
-            <div class="bg-white w-full rounded-2xl p-6 animate-in">
-                <h3 class="font-bold mb-4 text-lg">新增日期</h3>
-                <input v-model="tempDate" type="date" class="w-full p-3 bg-slate-50 rounded-xl border border-slate-100 mb-4">
-                <button @click="addTravelDate" class="w-full bg-[#2c447e] text-white py-4 rounded-xl font-bold shadow-lg">確認新增</button>
+        <!-- 其他 Modals -->
+        <div v-if="showDateModal" @click.self="showDateModal = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-8">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-6 space-y-4 animate-in">
+                <h3 class="font-bold">新增旅遊日期</h3>
+                <input v-model="tempDate" type="date" class="w-full p-3 bg-slate-50 rounded-xl outline-none border border-slate-100">
+                <button @click="addTravelDate" class="w-full bg-[#2c447e] text-white py-3 rounded-xl font-bold">確認新增</button>
             </div>
         </div>
 
-        <!-- 待辦分類新增 Modal -->
-        <div v-if="showAddCategoryModal" @click.self="showAddCategoryModal = false" class="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-8 text-left">
-            <div class="bg-white w-full rounded-2xl p-6 animate-in">
-                <h3 class="font-bold mb-4 text-center text-lg">新增分類</h3>
-                <input v-model="newCategoryTitle" type="text" placeholder="例如：藥品" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 mb-4">
-                <button @click="addCategory" class="w-full bg-[#2c447e] text-white py-4 rounded-xl font-bold shadow-lg">確定新增</button>
+        <div v-if="showItemModal" @click.self="showItemModal = false" class="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm p-4 text-left">
+            <div class="bg-white w-full max-w-sm rounded-[32px] p-8 space-y-6 animate-in">
+                <div class="flex justify-between items-center"><h3 class="text-xl font-bold">行程管理</h3><button @click="showItemModal = false"><i class="ph ph-x text-slate-400"></i></button></div>
+                <div class="space-y-4 text-left">
+                    <div class="flex gap-4">
+                        <div class="flex-1 text-xs font-bold text-slate-400">時間<input v-model="newItem.time" type="time" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none"></div>
+                        <div class="flex-[2] text-xs font-bold text-slate-400">地點<input v-model="newItem.location" type="text" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none text-slate-800 font-bold"></div>
+                    </div>
+                    <div class="text-xs font-bold text-slate-400">備註<input v-model="newItem.note" type="text" class="w-full p-4 bg-slate-50 rounded-2xl mt-1 outline-none text-slate-800"></div>
+                    <button @click="saveItem" class="w-full bg-[#2c447e] text-white py-5 rounded-[24px] font-bold shadow-xl">儲存變更</button>
+                    <button v-if="isEditingItem" @click="deleteItem" class="w-full text-red-400 text-xs font-bold mt-2">刪除此行程</button>
+                </div>
             </div>
         </div>
 
-        <div v-if="toastMsg" class="fixed top-10 left-1/2 -translate-x-1/2 z-[300] bg-slate-800 text-white px-6 py-3 rounded-full text-xs shadow-2xl animate-in font-bold">
+        <div v-if="showAddCategoryModal" @click.self="showAddCategoryModal = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-8">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-6 space-y-4 animate-in">
+                <h3 class="font-bold">新增分類名稱</h3>
+                <input v-model="newCategoryTitle" type="text" class="w-full p-3 bg-slate-50 rounded-xl outline-none">
+                <button @click="addCategory" class="w-full bg-[#2c447e] text-white py-3 rounded-xl font-bold">確認新增</button>
+            </div>
+        </div>
+
+        <div v-if="toastMsg" class="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-[#2c447e] text-white px-6 py-3 rounded-full text-xs shadow-2xl animate-in font-bold flex items-center gap-2">
+            <i class="ph ph-check-circle"></i>
             {{ toastMsg }}
         </div>
     </div>
 
-    <!-- Firebase SDK (連結修正) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const { createApp, ref, computed, onMounted } = window.Vue;
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
 
         createApp({
             setup() {
-                const toastMsg = ref('');
-                function showToast(msg) { toastMsg.value = msg; setTimeout(() => { toastMsg.value = ''; }, 3000); }
-
-                // 防禦性解析 Config
-                let firebaseConfig = {};
-                try {
-                    firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : {
-                        apiKey: "AIzaSyDxWNgW0r_7g_Ii1QwnpJbiKXbQXx--tYI",
-                        authDomain: "project-3c00579d-d20e-4acc-838.firebaseapp.com",
-                        projectId: "project-3c00579d-d20e-4acc-838",
-                        storageBucket: "project-3c00579d-d20e-4acc-838.firebasestorage.app",
-                        messagingSenderId: "628726134672",
-                        appId: "1:628726134672:web:eb83acf6b2ebc174d3e515",
-                        measurementId: "G-Q9ZRLTNDX5"
-                    };
-                } catch(e) { console.error("Firebase Config 無法解析"); }
-
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                const db = getFirestore(app);
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'travel-minimal-v2';
-
                 const activeTab = ref('itinerary');
-                const tripTitle = ref('我的日本之旅');
+                const tripTitle = ref(localStorage.getItem('trip_title') || '我的旅程');
+                const isEditingTitle = ref(false);
                 const exchangeRate = ref(0.21);
-                const isSyncing = ref(false);
-                const syncId = ref(localStorage.getItem('trip_sync_id') || Math.random().toString(36).substring(2, 8).toUpperCase());
-                const inputSyncId = ref('');
-                const showSyncModal = ref(false);
+                const toastMsg = ref('');
+
+                // AI 相關狀態
+                const userApiKey = ref(localStorage.getItem('user_gemini_key') || '');
                 const showKeyModal = ref(false);
+                const isAnalyzing = ref(false);
+                const cameraInput = ref(null);
+
+                // 刪除日期狀態
+                const showDeleteDayModal = ref(false);
 
                 const tabs = [
-                    { id: 'itinerary', label: '行程規劃' },
-                    { id: 'checklist', label: '待辦事項' },
-                    { id: 'expense', label: '旅遊記帳' }
+                    { id: 'itinerary', label: '行程', icon: 'ph-calendar-check' },
+                    { id: 'checklist', label: '待辦', icon: 'ph-checks' },
+                    { id: 'expense', label: '記帳', icon: 'ph-wallet' }
                 ];
 
-                const travelDates = ref([new Date().toISOString().split('T')[0]]);
+                const travelDates = ref(JSON.parse(localStorage.getItem('osaka_dates')) || [new Date().toISOString().split('T')[0]]);
                 const selectedDate = ref(travelDates.value[0]);
-                const allItinerary = ref([]);
-                const checklists = ref([]);
-                const expenses = ref([]);
-
+                const tempDate = ref('');
+                const showDateModal = ref(false);
+                const allItinerary = ref(JSON.parse(localStorage.getItem('osaka_all_itinerary')) || []);
                 const newItem = ref({ time: '', location: '', note: '' });
                 const showItemModal = ref(false);
                 const isEditingItem = ref(false);
                 const editingId = ref(null);
-                const showDateModal = ref(false);
-                const tempDate = ref('');
+
+                const checklists = ref(JSON.parse(localStorage.getItem('osaka_checklists')) || [
+                    { id: 1, title: '重要證件', items: [{ id: 101, text: '護照 / 簽證', checked: true }], collapsed: false, tempInput: '' }
+                ]);
                 const showAddCategoryModal = ref(false);
                 const newCategoryTitle = ref('');
-                const showDeleteDayModal = ref(false);
 
-                const userApiKey = ref(localStorage.getItem('user_gemini_key') || '');
-                const isAnalyzing = ref(false);
-                const cameraInput = ref(null);
+                const expenses = ref(JSON.parse(localStorage.getItem('osaka_expenses')) || []);
+                const newExpense = ref({ desc: '', amount: null });
+
                 const weatherData = ref({});
                 const weatherCodes = ref({});
 
-                let unsubscribe = null;
-                const initRealtimeSync = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                        onAuthStateChanged(auth, (user) => { if (user) startListening(); });
-                    } catch (e) { console.error("Auth Fail"); }
+                const showToast = (msg) => { toastMsg.value = msg; setTimeout(() => { toastMsg.value = ''; }, 3000); };
+                
+                // --- 效能優化：防抖式保存 ---
+                let saveTimer = null;
+                const saveData = () => {
+                    clearTimeout(saveTimer);
+                    saveTimer = setTimeout(() => {
+                        localStorage.setItem('trip_title', tripTitle.value);
+                        localStorage.setItem('osaka_dates', JSON.stringify(travelDates.value));
+                        localStorage.setItem('osaka_all_itinerary', JSON.stringify(allItinerary.value));
+                        localStorage.setItem('osaka_checklists', JSON.stringify(checklists.value));
+                        localStorage.setItem('osaka_expenses', JSON.stringify(expenses.value));
+                        localStorage.setItem('user_gemini_key', userApiKey.value);
+                    }, 500); 
                 };
 
-                const startListening = () => {
-                    if (unsubscribe) unsubscribe();
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trips', syncId.value);
-                    unsubscribe = onSnapshot(docRef, (snap) => {
-                        if (snap.exists()) {
-                            const data = snap.data();
-                            tripTitle.value = data.title || tripTitle.value;
-                            travelDates.value = (data.dates || travelDates.value).sort();
-                            allItinerary.value = data.itinerary || [];
-                            expenses.value = data.expenses || [];
-                            const cloudChecklists = data.checklists || [];
-                            checklists.value = cloudChecklists.map(cloudCat => {
-                                const localCat = checklists.value.find(l => l.id === cloudCat.id);
-                                return { ...cloudCat, tempInput: localCat ? localCat.tempInput : '' };
-                            });
-                        } else { pushToCloud(); }
-                    }, (err) => console.error("Snapshot error", err));
+                // --- 效能優化：圖片壓縮工具 ---
+                const compressImage = (base64Str, maxWidth = 1024) => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.src = base64Str;
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+
+                            if (width > maxWidth) {
+                                height = (maxWidth / width) * height;
+                                width = maxWidth;
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        };
+                    });
                 };
 
-                const pushToCloud = async () => {
-                    if (!db || !auth.currentUser) return;
-                    isSyncing.value = true;
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trips', syncId.value);
-                    try {
-                        await setDoc(docRef, {
-                            title: tripTitle.value, dates: travelDates.value, itinerary: allItinerary.value,
-                            checklists: checklists.value, expenses: expenses.value, lastUpdated: Date.now()
-                        }, { merge: true });
-                    } catch(e) { console.error("Push fail", e); }
-                    finally { setTimeout(() => { isSyncing.value = false; }, 800); }
-                };
-
-                const totalExpensesJPY = computed(() => expenses.value.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0));
-                const totalExpensesTWD = computed(() => (totalExpensesJPY.value * exchangeRate.value).toFixed(0));
-
-                const copySyncId = () => {
-                    const el = document.createElement("textarea"); el.value = syncId.value; document.body.appendChild(el); el.select();
-                    try { document.execCommand('copy'); showToast('同步 ID 已複製到剪貼簿'); } catch (err) {}
-                    document.body.removeChild(el);
-                };
-
-                const switchSyncId = () => {
-                    if (!inputSyncId.value) return;
-                    const id = inputSyncId.value.trim().toUpperCase();
-                    syncId.value = id;
-                    localStorage.setItem('trip_sync_id', id);
-                    showSyncModal.value = false;
-                    startListening();
-                    showToast('已切換同步 ID');
-                };
-
-                // 核心修復：刪除當日行程
                 const deleteCurrentDay = () => {
                     const targetDate = selectedDate.value;
                     travelDates.value = travelDates.value.filter(d => d !== targetDate);
                     allItinerary.value = allItinerary.value.filter(i => i.date !== targetDate);
                     if (travelDates.value.length === 0) travelDates.value = [new Date().toISOString().split('T')[0]];
                     selectedDate.value = travelDates.value[0];
-                    pushToCloud();
+                    saveData();
                     showDeleteDayModal.value = false;
-                    showToast('該日規劃已移除');
+                    showToast('該日行程已清除');
                 };
 
-                const openAddModal = () => { isEditingItem.value = false; editingId.value = null; newItem.value = { time: '12:00', location: '', note: '' }; showItemModal.value = true; };
-                const openEditModal = (item) => { isEditingItem.value = true; editingId.value = item.id; newItem.value = { ...item }; showItemModal.value = true; };
-                
-                const saveItem = () => {
-                    if (!newItem.value.location) { showToast('請填寫地點名稱'); return; }
-                    if (isEditingItem.value) {
-                        const idx = allItinerary.value.findIndex(i => i.id === editingId.value);
-                        if (idx !== -1) { allItinerary.value[idx] = { ...newItem.value }; }
-                    } else {
-                        allItinerary.value.push({ id: Date.now(), date: selectedDate.value, ...newItem.value });
-                    }
-                    pushToCloud();
-                    showItemModal.value = false;
-                    showToast('行程已同步更新');
+                const saveApiKey = () => {
+                    localStorage.setItem('user_gemini_key', userApiKey.value.trim());
+                    showToast('金鑰設定已儲存');
+                    showKeyModal.value = false;
                 };
 
-                const deleteItem = () => {
-                    allItinerary.value = allItinerary.value.filter(i => i.id !== editingId.value);
-                    pushToCloud();
-                    showItemModal.value = false;
-                    showToast('行程項目已刪除');
-                };
-
-                const removeItem = (id) => {
-                    allItinerary.value = allItinerary.value.filter(i => i.id !== id);
-                    pushToCloud();
-                    showToast('移除成功');
-                };
-
-                const addTravelDate = () => {
-                    if (!tempDate.value || travelDates.value.includes(tempDate.value)) return;
-                    travelDates.value.push(tempDate.value);
-                    travelDates.value.sort();
-                    pushToCloud();
-                    showDateModal.value = false;
-                    showToast('日期已新增');
-                };
-
-                const toggleCheckItem = (catId, itemId) => {
-                    const cat = checklists.value.find(c => c.id === catId);
-                    const item = cat.items.find(i => i.id === itemId);
-                    if (item) { item.checked = !item.checked; pushToCloud(); }
-                };
-
-                const addListItem = (cat) => {
-                    if (!cat.tempInput) return;
-                    cat.items.push({ id: Date.now(), text: cat.tempInput, checked: false });
-                    cat.tempInput = '';
-                    pushToCloud();
-                };
-
-                const deleteListItem = (catId, itemId) => {
-                    const cat = checklists.value.find(c => c.id === catId);
-                    if (cat) { cat.items = cat.items.filter(i => i.id !== itemId); pushToCloud(); }
-                };
-
-                const addCategory = () => {
-                    if (!newCategoryTitle.value) return;
-                    checklists.value.push({ id: Date.now(), title: newCategoryTitle.value, items: [], collapsed: false, tempInput: '' });
-                    newCategoryTitle.value = '';
-                    showAddCategoryModal.value = false;
-                    pushToCloud();
-                    showToast('新分類已建立');
-                };
-
-                const removeCategory = (id) => { checklists.value = checklists.value.filter(c => c.id !== id); pushToCloud(); };
-                const removeExpense = (idx) => { expenses.value.splice(idx, 1); pushToCloud(); };
-
-                const analyzeReceipt = async (base64, key) => {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: "分析此日本收據，提取 JSON: {amount, desc, date}" }, { inlineData: { mimeType: "image/jpeg", data: base64.split(',')[1] } }] }],
-                            generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
-                        })
-                    });
-                    const data = await res.json();
-                    return JSON.parse(data.candidates[0].content.parts[0].text);
-                };
+                const triggerCamera = () => { if (cameraInput.value) cameraInput.value.click(); };
 
                 const handlePhoto = async (event) => {
                     const file = event.target.files[0];
                     if (!file) return;
                     isAnalyzing.value = true;
-                    showToast('AI 分析辨識中...');
+                    showToast('AI 專家正在分析中...');
+                    
                     const reader = new FileReader();
                     reader.onloadend = async () => {
                         try {
-                            const compressed = await compressImage(reader.result);
-                            const result = await analyzeReceipt(compressed, userApiKey.value.trim());
-                            if (result && result.amount) {
-                                expenses.value.unshift({ desc: result.desc, amount: result.amount, date: result.date || new Date().toISOString().split('T')[0] });
-                                pushToCloud();
+                            const compressedBase64 = await compressImage(reader.result);
+                            const result = await analyzeReceipt(compressedBase64, userApiKey.value.trim());
+                            
+                            if (result && result.amount !== null) {
+                                expenses.value.unshift({
+                                    desc: result.desc || 'AI 辨識支出',
+                                    amount: result.amount,
+                                    date: result.date || new Date().toLocaleDateString('zh-TW', {month:'2-digit', day:'2-digit'})
+                                });
+                                saveData();
                                 showToast(`辨識成功：¥${result.amount}`);
                             }
-                        } catch (err) { showToast('辨識失敗，請重新嘗試'); }
-                        finally { isAnalyzing.value = false; }
+                        } catch (err) {
+                            showToast(err.message);
+                        } finally {
+                            isAnalyzing.value = false;
+                        }
                     };
                     reader.readAsDataURL(file);
-                    event.target.value = '';
+                    event.target.value = ''; 
                 };
 
-                const compressImage = (base64Str, maxWidth = 1024) => {
-                    return new Promise((resolve) => {
-                        const img = new Image(); img.src = base64Str;
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            let w = img.width, h = img.height;
-                            if (w > maxWidth) { h = (maxWidth/w)*h; w = maxWidth; }
-                            canvas.width = w; canvas.height = h;
-                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                            resolve(canvas.toDataURL('image/jpeg', 0.7));
-                        };
-                    });
+                const analyzeReceipt = async (base64Full, userKey) => {
+                    const isDev = window.location.hostname === 'localhost';
+                    const finalKey = userKey || (isDev ? '' : null);
+
+                    if (!finalKey) throw new Error("請輸入 API 金鑰以啟動辨識");
+
+                    const MODEL_PRIORITY = [
+                        'gemini-2-flash',
+                        'gemini-2.5-flash',
+                        'gemini-2.5-pro'
+                    ];
+
+                    const systemPrompt = `你是一位精通日語與日本商業習慣的收據分析專家。
+                    任務：從上傳的收據圖片中提取關鍵數據。
+                    輸出格式：必須為嚴格格式的 JSON，欄位如下：
+                    {
+                    "amount": 數字(僅限合計金額，排除免稅額或分項數字),
+                    "desc": "商鋪名稱(請翻譯或轉寫為繁體中文)",
+                    "date": "YYYY-MM-DD"
+                    }
+                    約束條件：
+                    1. 嚴禁輸出 JSON 以外的任何解釋文字。
+                    2. 若辨識不清，請將該欄位設為 null。
+                    3. 優先尋找「合計」、「税込」或「Total」標籤後的數值。`;
+
+                    let lastError = null;
+
+                    for (const modelId of MODEL_PRIORITY) {
+                        try {
+                            console.log(`⚡ 正在調用模型清單中的引擎: ${modelId}`);
+                            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${finalKey}`;
+
+                            const response = await fetch(endpoint, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{
+                                        parts: [
+                                            { text: systemPrompt },
+                                            { inlineData: { mimeType: "image/jpeg", data: base64Full.split(',')[1] } }
+                                        ]
+                                    }],
+                                    generationConfig: { 
+                                        responseMimeType: "application/json",
+                                        temperature: 0.1 
+                                    }
+                                })
+                            });
+
+                            if (response.status === 429) continue;
+                            if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.error?.message || '辨識發生錯誤');
+                            }
+
+                            const data = await response.json();
+                            const rawText = data.candidates[0].content.parts[0].text;
+                            return JSON.parse(rawText);
+
+                        } catch (err) {
+                            lastError = err;
+                        }
+                    }
+                    throw new Error(lastError?.message || "所有模型皆無法完成辨識，請檢查網路或配額");
                 };
 
-                const fetchWeather = async () => { 
-                    try { 
-                        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.69&longitude=135.50&daily=temperature_2m_max,weathercode&timezone=Asia%2FTokyo'); 
-                        const data = await res.json(); 
-                        data.daily.time.forEach((t, i) => { weatherData.value[t] = `${data.daily.temperature_2m_max[i]}°C`; weatherCodes.value[t] = data.daily.weathercode[i]; }); 
-                    } catch(e) {} 
+                // --- 基礎功能 ---
+                const formatDateDay = (d) => d ? d.split('-')[2] : '';
+                const getDayName = (d) => d ? ['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(d).getDay()] : '';
+                const formatDateFull = (d) => { if(!d) return ''; const dt = new Date(d); return `${dt.getMonth()+1}/${dt.getDate()}`; };
+                const addTravelDate = () => { if (!tempDate.value || travelDates.value.includes(tempDate.value)) return; travelDates.value.push(tempDate.value); travelDates.value.sort(); saveData(); showDateModal.value = false; };
+                const openAddModal = () => { isEditingItem.value = false; newItem.value = { time: '12:00', location: '', note: '' }; showItemModal.value = true; };
+                const openEditModal = (item) => { isEditingItem.value = true; editingId.value = item.id; newItem.value = { ...item }; showItemModal.value = true; };
+                const saveItem = () => { 
+                    if (!newItem.value.location) return; 
+                    if (isEditingItem.value) { 
+                        const idx = allItinerary.value.findIndex(i => i.id === editingId.value); 
+                        allItinerary.value[idx] = { ...newItem.value }; 
+                    } else { 
+                        allItinerary.value.push({ id: Date.now(), date: selectedDate.value, ...newItem.value }); 
+                    } 
+                    saveData(); 
+                    showItemModal.value = false; 
+                    showToast('行程已儲存'); 
                 };
+                const deleteItem = () => { allItinerary.value = allItinerary.value.filter(i => i.id !== editingId.value); saveData(); showItemModal.value = false; showToast('行程已刪除'); };
+                const openNavigation = (l) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(l)}`);
+                const toggleItem = (catId, itemId) => { const cat = checklists.value.find(c => c.id === catId); const item = cat.items.find(i => i.id === itemId); item.checked = !item.checked; saveData(); };
+                const addListItem = (cat) => { if (!cat.tempInput) return; cat.items.push({ id: Date.now(), text: cat.tempInput, checked: false }); cat.tempInput = ''; saveData(); };
+                const addCategory = () => { if (!newCategoryTitle.value) return; checklists.value.push({ id: Date.now(), title: newCategoryTitle.value, items: [], collapsed: false, tempInput: '' }); newCategoryTitle.value = ''; showAddCategoryModal.value = false; saveData(); };
+                const removeCategory = (id) => { checklists.value = checklists.value.filter(c => c.id !== id); saveData(); };
+                const deleteListItem = (catId, itemId) => { const cat = checklists.value.find(c => c.id === catId); cat.items = cat.items.filter(i => i.id !== itemId); saveData(); };
+                const addExpense = () => { if (!newExpense.value.desc || !newExpense.value.amount) return; expenses.value.unshift({ ...newExpense.value, date: new Date().toLocaleDateString('zh-TW', {month:'2-digit', day:'2-digit'}) }); saveData(); newExpense.value = { desc: '', amount: null }; showToast('已新增支出'); };
+                const removeExpense = (idx) => { expenses.value.splice(idx, 1); saveData(); };
+                const fetchWeather = async () => { try { const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.69&longitude=135.50&daily=temperature_2m_max,weathercode&timezone=Asia%2FTokyo'); const data = await res.json(); data.daily.time.forEach((t, i) => { weatherData.value[t] = `${data.daily.temperature_2m_max[i]}°C`; weatherCodes.value[t] = data.daily.weathercode[i]; }); } catch(e) {} };
+                const getWeatherIcon = (d) => { const c = weatherCodes.value[d]; if (c === undefined) return 'ph ph-cloud'; return c <= 3 ? 'ph ph-sun' : c <= 67 ? 'ph ph-cloud-rain' : 'ph ph-cloud'; };
 
-                onMounted(() => { initRealtimeSync(); fetchWeather(); });
+                onMounted(() => fetchWeather());
 
                 return {
-                    activeTab, tabs, tripTitle, travelDates, selectedDate, allItinerary, newItem, showItemModal, showSyncModal, showKeyModal, syncId, inputSyncId, isSyncing,
-                    checklists, expenses, userApiKey, toastMsg, weatherData, weatherCodes, isAnalyzing, cameraInput, isEditingItem, tempDate, showDateModal, showAddCategoryModal, newCategoryTitle, showDeleteDayModal,
-                    totalExpensesJPY, totalExpensesTWD, exchangeRate, 
-                    currentDayItinerary: computed(() => allItinerary.value.filter(i => i.date === selectedDate.value).sort((a,b)=>a.time.localeCompare(b.time))),
-                    formatDateDay: (d) => d.split('-')[2],
-                    formatDateFull: (d) => { const dt = new Date(d); return `${dt.getMonth()+1}/${dt.getDate()}`; },
-                    getDayName: (d) => ['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(d).getDay()],
-                    copySyncId, switchSyncId, openAddModal, openEditModal, saveItem, deleteItem, removeItem, toggleCheckItem, addListItem, deleteListItem, addCategory, removeCategory, addTravelDate, deleteCurrentDay,
-                    triggerCamera: () => cameraInput.value.click(), handlePhoto,
-                    saveApiKey: () => { localStorage.setItem('user_gemini_key', userApiKey.value); showKeyModal.value = false; showToast('金鑰已儲存'); },
-                    openNavigation: (l) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(l)}`),
-                    removeExpense: (idx) => { expenses.value.splice(idx, 1); pushToCloud(); }
+                    activeTab, tabs, tripTitle, isEditingTitle, travelDates, selectedDate, allItinerary, newItem, showItemModal, showDateModal, isEditingItem, tempDate,
+                    checklists, showAddCategoryModal, newCategoryTitle,
+                    expenses, newExpense, userApiKey, showKeyModal, isAnalyzing, cameraInput,
+                    totalExpensesJPY: computed(() => expenses.value.reduce((a,b)=>a+b.amount, 0)),
+                    totalExpensesTWD: computed(() => (expenses.value.reduce((a,b)=>a+b.amount,0)*exchangeRate.value).toFixed(0)),
+                    exchangeRate, toastMsg, weatherData, formatDateDay, getDayName, formatDateFull, getWeatherIcon, 
+                    getCheckedCount: (cat) => cat.items.filter(i => i.checked).length, toggleItem, addListItem, addCategory, removeCategory, deleteListItem,
+                    openNavigation, saveData, openAddModal, addTravelDate, openEditModal, saveItem, addExpense, deleteItem, removeExpense,
+                    triggerCamera, handlePhoto, saveApiKey,
+                    showDeleteDayModal, deleteCurrentDay,
+                    currentDayItinerary: computed(() => allItinerary.value.filter(i => i.date === selectedDate.value).sort((a, b) => a.time.localeCompare(b.time)))
                 };
             }
         }).mount('#app');
